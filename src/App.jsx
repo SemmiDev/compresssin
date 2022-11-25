@@ -3,8 +3,8 @@ import imageCompression from 'browser-image-compression';
 
 const Intro = () => {
     return (
-        <h1 className='text-xl text-center mb-12 md:text-2xl lg:text-3xl font-bold text-secondary'>
-            Blazingly Fast image compression and optimization tool 🗲
+        <h1 className='text-lg text-center mb-12 md:text-2xl lg:text-3xl font-bold text-secondary'>
+            Blazingly 🗲 Fast Image Compression
         </h1>
     );
 };
@@ -14,17 +14,17 @@ const Download = ({ result }) => {
         <div className='p-5'>
             {result.map((item, index) => (
                 <div
-                    className='flex py-5 text-xs md:text-lg gap-x-2 justify-between items-center'
+                    className='flex py-5 text-xs md:text-lg gap-x-2 justify-between items-center border-1 border-secondary/30 border p-5 rounded-lg m-3'
                     key={index}
                 >
                     <h1 className='font-semibold text-accent'>
                         Name: {item.name}
                     </h1>
                     <h1 className='font-semibold text-accent'>
-                        Prev Size: {item.prev_size} MB
+                        Prev Size: {item.prev_size} mb
                     </h1>
                     <h1 className='font-semibold text-accent'>
-                        New Size: {item.new_size} MB
+                        New Size: {item.new_size} mb
                     </h1>
                     <a
                         className='btn btn-outline text-accent btn-primary btn-sm'
@@ -42,7 +42,7 @@ const Download = ({ result }) => {
 const RadialProgress = ({ percent }) => {
     return (
         <span
-            className='radial-progress bg-primary text-primary-content border-4 border-primary'
+            className='radial-progress bg-primary text-primary-content border-3 border-primary'
             style={{ '--value': percent }}
         >
             {percent.toFixed(0)}%
@@ -120,12 +120,12 @@ const ImageForm = () => {
                 onSubmit={handleImageUpload}
                 method='post'
                 encType='multipart/form-data'
-                className='w-full flex justify-center gap-5 items-center flex-col'
+                className='w-full flex justify-center  gap-5 items-center flex-col'
             >
                 <div className='form-control w-full max-w-xs'>
                     <label className='label'>
                         <span className='label-text text-accent'>
-                            Max Size (MB){' '}
+                            Maximum Size (mb){' '}
                             <h3 className='italic text-accent'>
                                 ex: 1 or 0,1 or 0,7, etc..
                             </h3>
@@ -133,16 +133,17 @@ const ImageForm = () => {
                     </label>
                     <input
                         required={true}
+                        autoFocus={true}
                         type='number'
                         ref={maxSizeRef}
-                        placeholder='1'
-                        className='input input-bordered w-full max-w-xs'
+                        placeholder='contoh: 1'
+                        className='input input-bordered input-primary text-accent w-full max-w-xs'
                     />
                 </div>
                 <div className='form-control w-full max-w-xs'>
                     <label className='label'>
                         <span className='label-text text-accent'>
-                            Max Width/Height{' '}
+                            Maximum Width/Height (px)
                             <h3 className='italic text-accent'>
                                 ex: 1280 or 1920 or 720, etc..
                             </h3>
@@ -152,8 +153,8 @@ const ImageForm = () => {
                         required={true}
                         type='number'
                         ref={maxWidthRef}
-                        placeholder='1920'
-                        className='input input-bordered w-full max-w-xs'
+                        placeholder='contoh: 1920'
+                        className='input input-bordered input-primary text-accent w-full max-w-xs'
                     />
                 </div>
                 <input
@@ -163,13 +164,13 @@ const ImageForm = () => {
                     required={true}
                     multiple={true}
                     accept='image/*'
-                    className='file-input  file-input-outline file-input-secondary w-full max-w-xs'
+                    className='file-input file-input-outline file-input-primary w-full max-w-xs'
                 />
 
                 {buttonText == 'Compress' && (
                     <button
                         type='submit'
-                        className='btn btn-outline btn-secondary'
+                        className='btn btn-outline btn-primary'
                         onClick={handleImageUpload}
                     >
                         {buttonText}
@@ -182,7 +183,7 @@ const ImageForm = () => {
 
                 {buttonText === 'Done' && (
                     <a
-                        className='btn btn-outline btn-secondary'
+                        className='btn btn-outline btn-primary'
                         onClick={() => {
                             setTotalTask(0);
                             setSectionProgess(0);
@@ -193,7 +194,7 @@ const ImageForm = () => {
                             imageRef.current.value = '';
                         }}
                     >
-                        Compress More
+                        Reset
                     </a>
                 )}
             </form>
@@ -205,8 +206,10 @@ const ImageForm = () => {
 
 const Layout = ({ children }) => {
     return (
-        <div className='flex flex-col  h-screen max-w-3xl mx-auto pt-12'>
-            {children}
+        <div className='mockup-window border max-w-xl mx-auto mt-12 border-base-300'>
+            <div className='flex flex-col justify-center px-4 py-16 border-base-300'>
+                {children}
+            </div>
         </div>
     );
 };
