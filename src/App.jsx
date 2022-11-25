@@ -17,15 +17,24 @@ const Download = ({ result }) => {
                     className='flex py-5 text-xs md:text-lg gap-x-2 justify-between items-center border-1 border-secondary/30 border p-5 rounded-lg m-3'
                     key={index}
                 >
-                    <h1 className='font-semibold text-accent'>
-                        Name: {item.name}
-                    </h1>
-                    <h1 className='font-semibold text-accent'>
-                        Prev Size: {item.prev_size} mb
-                    </h1>
-                    <h1 className='font-semibold text-accent'>
-                        New Size: {item.new_size} mb
-                    </h1>
+                    <div className='font-semibold text-accent flex items-center justify-between gap-x-2'>
+                        <span>{item.prev_size} mb</span>
+                        <svg
+                            xmlns='http://www.w3.org/2000/svg'
+                            fill='none'
+                            viewBox='0 0 24 24'
+                            strokeWidth={1.5}
+                            stroke='currentColor'
+                            className='w-6 h-6'
+                        >
+                            <path
+                                strokeLinecap='round'
+                                strokeLinejoin='round'
+                                d='M17.25 8.25L21 12m0 0l-3.75 3.75M21 12H3'
+                            />
+                        </svg>
+                        <span>{item.new_size} mb</span>
+                    </div>
                     <a
                         className='btn btn-outline text-accent btn-primary btn-sm'
                         download={item.name}
@@ -78,8 +87,12 @@ const ImageForm = () => {
     async function handleImageUpload(e) {
         e.preventDefault();
         setButtonText('Compressing...');
+
+        let maxSize = maxSizeRef.current.value ? maxSizeRef.current.value : 1;
+        maxSize = maxSize.toString().replace(',', '.');
+
         const options = {
-            maxSizeMB: maxSizeRef.current.value ? maxSizeRef.current.value : 1,
+            maxSizeMB: maxSize,
             maxWidthOrHeight: maxWidthRef.current.value
                 ? maxWidthRef.current.value
                 : 1920,
@@ -127,7 +140,7 @@ const ImageForm = () => {
                         <span className='label-text text-accent'>
                             Maximum Size (mb){' '}
                             <h3 className='italic text-accent'>
-                                ex: 1 or 0,1 or 0,7, etc..
+                                ex: 1 or 0.1 or 0.7, etc..
                             </h3>
                         </span>
                     </label>
@@ -206,7 +219,7 @@ const ImageForm = () => {
 
 const Layout = ({ children }) => {
     return (
-        <div className='mockup-window border max-w-xl mx-auto mt-12 border-base-300'>
+        <div className='mockup-window border max-w-xl mx-auto mt-3 border-base-300'>
             <div className='flex flex-col justify-center px-4 py-16 border-base-300'>
                 {children}
             </div>
