@@ -17,15 +17,17 @@ const Download = ({ result }) => {
                     className='flex py-5 text-xs md:text-lg gap-x-2 justify-between items-center'
                     key={index}
                 >
-                    <h1 className='font-semibold'>Name: {item.name}</h1>
-                    <h1 className='font-semibold'>
+                    <h1 className='font-semibold text-accent'>
+                        Name: {item.name}
+                    </h1>
+                    <h1 className='font-semibold text-accent'>
                         Prev Size: {item.prev_size} MB
                     </h1>
-                    <h1 className='font-semibold'>
+                    <h1 className='font-semibold text-accent'>
                         New Size: {item.new_size} MB
                     </h1>
                     <a
-                        className='btn btn-outline btn-primary btn-sm'
+                        className='btn btn-outline text-accent btn-primary btn-sm'
                         download={item.name}
                         href={item.img}
                     >
@@ -77,8 +79,10 @@ const ImageForm = () => {
         e.preventDefault();
         setButtonText('Compressing...');
         const options = {
-            maxSizeMB: maxSizeRef.current.value,
-            maxWidthOrHeight: maxWidthRef.current.value,
+            maxSizeMB: maxSizeRef.current.value ? maxSizeRef.current.value : 1,
+            maxWidthOrHeight: maxWidthRef.current.value
+                ? maxWidthRef.current.value
+                : 1920,
             useWebWorker: true,
         };
 
@@ -120,9 +124,9 @@ const ImageForm = () => {
             >
                 <div className='form-control w-full max-w-xs'>
                     <label className='label'>
-                        <span className='label-text'>
+                        <span className='label-text text-accent'>
                             Max Size (MB){' '}
-                            <h3 className='italic'>
+                            <h3 className='italic text-accent'>
                                 ex: 1 or 0,1 or 0,7, etc..
                             </h3>
                         </span>
@@ -137,9 +141,9 @@ const ImageForm = () => {
                 </div>
                 <div className='form-control w-full max-w-xs'>
                     <label className='label'>
-                        <span className='label-text'>
+                        <span className='label-text text-accent'>
                             Max Width/Height{' '}
-                            <h3 className='italic'>
+                            <h3 className='italic text-accent'>
                                 ex: 1280 or 1920 or 720, etc..
                             </h3>
                         </span>
