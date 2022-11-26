@@ -1,77 +1,38 @@
 import { useEffect, useRef, useState } from 'react';
 import imageCompression from 'browser-image-compression';
+import Intro from './components/intro';
+import Layout from './components/layout';
+import RadialProgress from './components/radial-progress';
+import Download from './components/result';
+import { initializeApp } from 'firebase/app';
+import { getDatabase, runTransaction, onValue, ref } from 'firebase/database';
 
-const Intro = () => {
-    return (
-        <h1 className='text-lg text-center mb-12 md:text-2xl lg:text-3xl font-bold text-secondary flex gap-x-2 items-center justify-center'>
-            Blazingly
-            <svg
-                xmlns='http://www.w3.org/2000/svg'
-                fill='none'
-                viewBox='0 0 24 24'
-                strokeWidth={1.5}
-                stroke='currentColor'
-                className='w-6 h-6'
-            >
-                <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    d='M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z'
-                />
-            </svg>
-            Fast Image Compression
-        </h1>
-    );
+const firebaseConfig = {
+    apiKey: import.meta.env.VITE_API_KEY,
+    authDomain: import.meta.env.VITE_AUTH_DOMAIN,
+    projectId: import.meta.env.VITE_PROJECT_ID,
+    storageBucket: import.meta.env.VITE_STORAGE_BUCKET,
+    messagingSenderId: import.meta.env.VITE_MESSAGING_SENDER_ID,
+    appId: import.meta.env.VITE_APP_ID,
+    databaseURL: import.meta.env.VITE_DATABASE_URL,
 };
 
-const Download = ({ result }) => {
-    return (
-        <div className='p-5'>
-            {result.map((item, index) => (
-                <div
-                    className='flex py-5 text-xs md:text-lg gap-x-2 justify-between items-center border-1 border-secondary/30 border p-5 rounded-lg m-3'
-                    key={index}
-                >
-                    <div className='font-semibold text-accent flex items-center justify-between gap-x-2'>
-                        <span>{item.prev_size} mb</span>
-                        <svg
-                            xmlns='http://www.w3.org/2000/svg'
-                            fill='none'
-                            viewBox='0 0 24 24'
-                            strokeWidth={1.5}
-                            stroke='currentColor'
-                            className='w-6 h-6'
-                        >
-                            <path
-                                strokeLinecap='round'
-                                strokeLinejoin='round'
-                                d='M17.25 8.25L21 12m0 0l-3.75 3.75M21 12H3'
-                            />
-                        </svg>
-                        <span>{item.new_size} mb</span>
-                    </div>
-                    <a
-                        className='btn btn-outline text-accent btn-primary btn-sm'
-                        download={item.name}
-                        href={item.img}
-                    >
-                        Download
-                    </a>
-                </div>
-            ))}
-        </div>
-    );
+initializeApp(firebaseConfig);
+
+const BeautifyCounterSnapshotMessage = (total) => {
+    if (total < 1000) return total;
+    else if (total < 1000000) return `${(total / 1000).toFixed(1)}K+`;
+    else return `${(total / 1000000).toFixed(1)}M+`;
 };
 
-const RadialProgress = ({ percent }) => {
-    return (
-        <span
-            className='radial-progress bg-primary text-primary-content border-3 border-primary'
-            style={{ '--value': percent }}
-        >
-            {percent.toFixed(0)}%
-        </span>
-    );
+const updateCounterTransaction = (addCounterValue) => {
+    const dbRef = ref(getDatabase(), 'counter');
+    runTransaction(dbRef, (counter) => {
+        if (counter) {
+            counter.total += addCounterValue;
+        }
+        return counter;
+    });
 };
 
 const ImageForm = () => {
@@ -87,7 +48,8 @@ const ImageForm = () => {
     const [totalTask, setTotalTask] = useState(0);
     const [sectionProgess, setSectionProgess] = useState(0);
     const [completedTaskCounter, setCompletedTaskCounter] = useState(0);
-    const [completedBarProgess, setCompletedBarProgess] = useState(0);
+    const [completedBarProgess, setCompletedBarProgress] = useState(0);
+    const [counterSnapshot, setCounterSnapshot] = useState(0);
 
     /*
         totalTasks = n
@@ -96,12 +58,24 @@ const ImageForm = () => {
     */
 
     useEffect(() => {
-        setCompletedBarProgess(completedTaskCounter * sectionProgess);
+        maxSizeRef.current.value = 1;
+        maxWidthRef.current.value = 1920;
+
+        const dbRef = ref(getDatabase(), 'counter/total');
+        onValue(dbRef, (snapshot) => {
+            setCounterSnapshot(snapshot.val());
+        });
+    }, []);
+
+    useEffect(() => {
+        setCompletedBarProgress(completedTaskCounter * sectionProgess);
     }, [completedTaskCounter]);
 
     async function handleImageUpload(e) {
         e.preventDefault();
+
         setButtonText('Compressing...');
+        setResult([]);
 
         let maxSize = maxSizeRef.current.value ? maxSizeRef.current.value : 1;
         maxSize = maxSize.toString().replace(',', '.');
@@ -115,20 +89,21 @@ const ImageForm = () => {
         };
 
         const images = imageRef.current.files;
-        setTotalTask(images.length);
+        const imagesLength = images.length;
+        setTotalTask(imagesLength);
         setSectionProgess(100 / images.length);
 
-        for (let i = 0; i < images.length; i++) {
+        for (let i = 0; i < imagesLength; i++) {
             const imageFile = images[i];
 
             const prevSize = imageFile.size / 1024 / 1024;
             const compressedFile = await imageCompression(imageFile, options);
             const newSize = compressedFile.size / 1024 / 1024;
-
             const extension = compressedFile.name.split('.').pop();
+
             const result = {
                 total_file: totalTask,
-                name: i + 1 + '.' + extension,
+                name: `${i + 1}.${extension}`,
                 prev_size: prevSize.toFixed(2), // MB
                 new_size: newSize.toFixed(2), // MB
                 img: URL.createObjectURL(compressedFile),
@@ -138,12 +113,33 @@ const ImageForm = () => {
             setCompletedTaskCounter((prev) => prev + 1);
         }
 
+        updateCounterTransaction(imagesLength);
+
+        // https://github.com/firebase/snippets-web/blob/36740fb2c39383621c0c0a948236e9eab8a71516/database-next/read-and-write.js#L42
+        // console.log('banyak data di server = ' + data);
+        // console.log('data baru = ' + counter);
+        // const total = data + counter;
+        // console.log('total = ' + total);
+        // set(ref(getDatabase(), 'counter', total));
+
         setButtonText('Done');
         setStatus('Done');
+        setTotalTask(0);
+        setSectionProgess(0);
+        setCompletedTaskCounter(0);
+        setCompletedBarProgress(0);
+        setButtonText('Compress');
+        imageRef.current.value = '';
     }
 
     return (
         <div className='flex flex-col justify-center items-center gap-y-12'>
+            <span className='text-center text-xs md:text-md lg:text-lg'>
+                Total gambar yang telah di compress =
+                {` ` +
+                    BeautifyCounterSnapshotMessage(counterSnapshot) +
+                    ' buah'}
+            </span>
             <form
                 onSubmit={handleImageUpload}
                 method='post'
@@ -155,17 +151,16 @@ const ImageForm = () => {
                         <span className='label-text text-accent'>
                             Maximum Size (mb){' '}
                             <h3 className='italic text-accent'>
-                                ex: 1 or 0.1 or 0.7, etc..
+                                ex ➜ 1 or 0.1 or 0.7, etc..
                             </h3>
                         </span>
                     </label>
                     <input
                         required={true}
-                        autoFocus={true}
                         type='number'
                         ref={maxSizeRef}
-                        placeholder='contoh: 1'
-                        className='input input-bordered input-primary text-accent w-full max-w-xs'
+                        placeholder='ex ➜ 1'
+                        className='input input-bordered bg-slate-900 input-primary text-accent w-full max-w-xs'
                     />
                 </div>
                 <div className='form-control w-full max-w-xs'>
@@ -173,7 +168,7 @@ const ImageForm = () => {
                         <span className='label-text text-accent'>
                             Maximum Width/Height (px)
                             <h3 className='italic text-accent'>
-                                ex: 1280 or 1920 or 720, etc..
+                                ex ➜ 1280 or 1920 or 720, etc..
                             </h3>
                         </span>
                     </label>
@@ -181,8 +176,8 @@ const ImageForm = () => {
                         required={true}
                         type='number'
                         ref={maxWidthRef}
-                        placeholder='contoh: 1920'
-                        className='input input-bordered input-primary text-accent w-full max-w-xs'
+                        placeholder={`ex ➜ 1920`}
+                        className='input input-bordered bg-slate-900 input-primary text-accent w-full max-w-xs'
                     />
                 </div>
                 <input
@@ -192,7 +187,7 @@ const ImageForm = () => {
                     required={true}
                     multiple={true}
                     accept='image/*'
-                    className='file-input file-input-outline file-input-primary w-full max-w-xs'
+                    className='file-input file-input-outline bg-slate-900 file-input-primary w-full max-w-xs'
                 />
 
                 {buttonText == 'Compress' && (
@@ -209,35 +204,20 @@ const ImageForm = () => {
                     <RadialProgress percent={completedBarProgess} />
                 )}
 
-                {buttonText === 'Done' && (
-                    <a
+                {buttonText == 'Done' && (
+                    <button
+                        type='button'
                         className='btn btn-outline btn-primary'
                         onClick={() => {
-                            setTotalTask(0);
-                            setSectionProgess(0);
-                            setCompletedTaskCounter(0);
-                            setCompletedBarProgess(0);
-                            setResult([]);
-                            setButtonText('Compress');
-                            imageRef.current.value = '';
+                            window.location.reload();
                         }}
                     >
                         Reset
-                    </a>
+                    </button>
                 )}
             </form>
 
             {status === 'Done' && <Download result={result} />}
-        </div>
-    );
-};
-
-const Layout = ({ children }) => {
-    return (
-        <div className='mockup-window border max-w-xl mx-auto mt-3 border-base-300'>
-            <div className='flex flex-col justify-center px-4 py-16 border-base-300'>
-                {children}
-            </div>
         </div>
     );
 };
